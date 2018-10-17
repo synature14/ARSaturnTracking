@@ -32,13 +32,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         super.viewDidLoad()
         // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
-
-        // Create a new scene
-        let solarScene = SCNScene(named: "solarSystem.scn")!
-        planetType = .sun
-        
-        // Set the scene to the view
-        sceneView.scene = solarScene
         configureLighting()
     }
     
@@ -64,7 +57,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     }
     
     func setPlanets() {
-        let childNodes = sceneView.scene.rootNode.childNodes
+        let solarScene = SCNScene(named: "solarSystem.scn")!
+        let childNodes = solarScene.rootNode.childNodes
         
         childNodes.forEach { node in
             guard let nodeName = node.name else {
@@ -78,19 +72,35 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             let type: PlanetType = PlanetType.init(rawValue: nodeName)!
             switch type {
             case .sun:
-                ()
-            case .mars:
-                let marsParent = parentNode(of: node, revolving: 1.52)
-                self.sceneView.scene.rootNode.addChildNode(marsParent)
+                node.position = SCNVector3(0, 0, -5)
+                node.runAction(rotating(duration: 0.5))
+                self.sceneView.scene.rootNode.addChildNode(node)
+                
+            case .mercury:
+                node.position = SCNVector3(0, 1, -7)
+                let mercuryParent = parentNode(of: node, revolving: 0.38, childRotating: 3)
+                self.sceneView.scene.rootNode.addChildNode(mercuryParent)
+                
             case .venus:
-                let venusParent = parentNode(of: node, revolving: 0.72)
+                node.position = SCNVector3(0, 3, -8)
+                let venusParent = parentNode(of: node, revolving: 0.72, childRotating: 4)
                 self.sceneView.scene.rootNode.addChildNode(venusParent)
-            case .jupiter:
-                let jupiterParent = parentNode(of: node, revolving: 5.2)
-                self.sceneView.scene.rootNode.addChildNode(jupiterParent)
+                
             case .earth:
                 createEarthAndMoon()
+                
+            case .mars:
+                node.position = SCNVector3(0, 0, -10)
+                let marsParent = parentNode(of: node, revolving: 1.1, childRotating: 4)
+                self.sceneView.scene.rootNode.addChildNode(marsParent)
+           
+            case .jupiter:
+                node.position = SCNVector3(1, 4.5, -14)
+                let jupiterParent = parentNode(of: node, revolving: 4.2, childRotating: 5)
+                self.sceneView.scene.rootNode.addChildNode(jupiterParent)
+                
             case .saturn:
+                node.position = SCNVector3(0, 0, -16)
                 createSaturnWithRing()
             default:
                 break
@@ -98,23 +108,27 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         }
     }
     
-    private func parentNode(of planet: SCNNode, revolving duration: Double) -> PlanetNode {
+    private func parentNode(of planet: SCNNode, revolving duration: Double, childRotating speed: Double) -> PlanetNode {
         let parentNode = PlanetNode()
-        parentNode.position = SCNVector3(0, 0, -3)
+        parentNode.position = SCNVector3(0, 0, -2)
+        planet.runAction(rotating(duration: speed))
         parentNode.addChildNode(planet)
         parentNode.revolvingAnimation(speed: duration)
         return parentNode
     }
     
     private func createEarthAndMoon() {
-        let earth = sceneView.scene.rootNode.childNodes.filter { $0.name == PlanetType.earth.rawValue }.first!
+        let solarScene = SCNScene(named: "solarSystem.scn")!
+        let childNodes = solarScene.rootNode.childNodes
+        
+        let earth = childNodes.filter { $0.name == PlanetType.earth.rawValue }.first!
         earth.runAction(rotating(duration: 4))     // 자전
         
-        let moon = sceneView.scene.rootNode.childNodes.filter { $0.name == PlanetType.moon.rawValue }.first!
-        moon.runAction(rotating(duration: 4))          // 자전
+        let moon = childNodes.filter { $0.name == PlanetType.moon.rawValue }.first!
+        moon.runAction(rotating(duration: 2))          // 자전
         
         let moonParent = PlanetNode()
-        moonParent.eulerAngles = SCNVector3(0, 0, -2)
+        moonParent.eulerAngles = SCNVector3(0, 0, 45.degreeToRadians)
         moonParent.addChildNode(moon)
         earth.addChildNode(moonParent)
         
@@ -127,20 +141,23 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     }
     
     private func createSaturnWithRing() {
-        let saturn = sceneView.scene.rootNode.childNodes.filter { $0.name == PlanetType.saturn.rawValue }.first!
-        let saturnRing = sceneView.scene.rootNode.childNodes.filter { $0.name == "saturnRing" }.first!
-
-        saturnRing.position = SCNVector3(0, 0, -2)
+        let solarScene = SCNScene(named: "solarSystem.scn")!
+        let childNodes = solarScene.rootNode.childNodes
+        
+        let saturn = childNodes.filter { $0.name == PlanetType.saturn.rawValue }.first!
+        let saturnRing = childNodes.filter { $0.name == "saturnRing" }.first!
+        saturn.runAction(rotating(duration: 6))
+        saturnRing.position = SCNVector3(0, 0, 0)
         saturn.addChildNode(saturnRing)
-        let saturnParent = parentNode(of: saturn, revolving: 9.58)
-        saturnParent.eulerAngles = SCNVector3(0, 0, 10)
+        
+        let saturnParent = parentNode(of: saturn, revolving: 9.58, childRotating: 4.5)
+        saturnParent.eulerAngles = SCNVector3(0, 0, 30.degreeToRadians)
         self.sceneView.scene.rootNode.addChildNode(saturnParent)
     }
-
     
     // 자전
     private func rotating(duration: Double) -> SCNAction {
-        let rotationAction = SCNAction.rotateBy(x: 0, y: CGFloat.pi * 360 / 180, z: 0, duration: duration)
+        let rotationAction = SCNAction.rotateBy(x: 0, y: CGFloat(360.degreeToRadians), z: 0, duration: duration)
         let forever = SCNAction.repeatForever(rotationAction)
         return forever
     }

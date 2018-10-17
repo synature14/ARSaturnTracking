@@ -9,12 +9,15 @@
 import Foundation
 import ARKit
 
-class PlanetNode: SCNNode {
+extension Int {
+    var degreeToRadians: Double {return Double(self) * .pi/180}
+}
 
+
+class PlanetNode: SCNNode {
     // 공전
     func revolvingAnimation (speed: Double) {
-//        let spinAction = SCNAction.rotateBy(x: 0, y:  CGFloat.pi * 360 / 180, z: 0, duration: spinDuration)
-        let revolveAction = SCNAction.rotateBy(x: 0, y:  CGFloat.pi * 360 / 180, z: 0, duration: speed * 5)
+        let revolveAction = SCNAction.rotateBy(x: 0, y:  CGFloat(360.degreeToRadians), z: 0, duration: speed * 5)
         let forever = SCNAction.repeatForever(revolveAction)
         self.runAction(forever)
     }
