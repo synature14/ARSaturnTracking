@@ -14,17 +14,19 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
  
-    enum Planet: String {
-        case sun = "Sun"
+    enum PlanetType: String {
+        case sun = "sun"
         case mercury = "mercury"
         case venus = "venus"
         case earth = "earth"
         case moon = "moon"
-        case marse = "marse"
+        case mars = "mars"
+        case jupiter = "jupiter"
         case saturn = "saturn"
+        case saturnRing = "saturnRing"
     }
     
-    var planetType: Planet!
+    var planetType: PlanetType!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -37,7 +39,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         // Set the scene to the view
         sceneView.scene = solarScene
-//        sceneView.scene.rootNode.childNodes.map { $0.runAction(spinAction) }
         configureLighting()
     }
     
@@ -49,13 +50,12 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        createEarthAndMoon()
+        setPlanets()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        // Pause the view's session
-        sceneView.session.pause()
+        sceneView.session.pause() // Pause the view's session
     }
     
     func configureLighting() {
@@ -63,69 +63,86 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.automaticallyUpdatesLighting = true
     }
     
-    private func parentNode(of planet: SCNNode) -> PlanetNode {
-        let parentNode = PlanetNode()
+    func setPlanets() {
+        let childNodes = sceneView.scene.rootNode.childNodes
         
+        childNodes.forEach { node in
+            guard let nodeName = node.name else {
+                return
+            }
+        
+            if nodeName == "parent" || nodeName == "camera" {
+                return
+            }
+            
+            let type: PlanetType = PlanetType.init(rawValue: nodeName)!
+            switch type {
+            case .sun:
+                ()
+            case .mars:
+                let marsParent = parentNode(of: node, revolving: 1.52)
+                self.sceneView.scene.rootNode.addChildNode(marsParent)
+            case .venus:
+                let venusParent = parentNode(of: node, revolving: 0.72)
+                self.sceneView.scene.rootNode.addChildNode(venusParent)
+            case .jupiter:
+                let jupiterParent = parentNode(of: node, revolving: 5.2)
+                self.sceneView.scene.rootNode.addChildNode(jupiterParent)
+            case .earth:
+                createEarthAndMoon()
+            case .saturn:
+                createSaturnWithRing()
+            default:
+                break
+            }
+        }
+    }
+    
+    private func parentNode(of planet: SCNNode, revolving duration: Double) -> PlanetNode {
+        let parentNode = PlanetNode()
+        parentNode.position = SCNVector3(0, 0, -3)
+        parentNode.addChildNode(planet)
+        parentNode.revolvingAnimation(speed: duration)
         return parentNode
     }
-
-    func createEarthAndMoon() {
-        let earth = sceneView.scene.rootNode.childNodes.filter { $0.name == Planet.earth.rawValue }.first!
-        earth.runAction(rotating(duration: 6))     // 자전
+    
+    private func createEarthAndMoon() {
+        let earth = sceneView.scene.rootNode.childNodes.filter { $0.name == PlanetType.earth.rawValue }.first!
+        earth.runAction(rotating(duration: 4))     // 자전
         
-        let moon = sceneView.scene.rootNode.childNodes.filter { $0.name == Planet.moon.rawValue }.first!
-        moon.runAction(rotating(duration: 5))          // 자전
+        let moon = sceneView.scene.rootNode.childNodes.filter { $0.name == PlanetType.moon.rawValue }.first!
+        moon.runAction(rotating(duration: 4))          // 자전
         
         let moonParent = PlanetNode()
-        moonParent.eulerAngles = SCNVector3(0, 0, 0)
+        moonParent.eulerAngles = SCNVector3(0, 0, -2)
         moonParent.addChildNode(moon)
         earth.addChildNode(moonParent)
         
         let earthParent = PlanetNode()
-        earthParent.position = SCNVector3(0, 0, -10)
-        earthParent.revolvingAnimation(speed: 1.3)  // 공전
+        earthParent.position = SCNVector3(0, 0, -5)
+        earthParent.revolvingAnimation(speed: 1.0)  // 공전
         earthParent.addChildNode(earth)
         
         self.sceneView.scene.rootNode.addChildNode(earthParent)
     }
     
+    private func createSaturnWithRing() {
+        let saturn = sceneView.scene.rootNode.childNodes.filter { $0.name == PlanetType.saturn.rawValue }.first!
+        let saturnRing = sceneView.scene.rootNode.childNodes.filter { $0.name == "saturnRing" }.first!
 
+        saturnRing.position = SCNVector3(0, 0, -2)
+        saturn.addChildNode(saturnRing)
+        let saturnParent = parentNode(of: saturn, revolving: 9.58)
+        saturnParent.eulerAngles = SCNVector3(0, 0, 10)
+        self.sceneView.scene.rootNode.addChildNode(saturnParent)
+    }
+
+    
     // 자전
     private func rotating(duration: Double) -> SCNAction {
-        let rotationAction = SCNAction.rotateBy(x: CGFloat.pi * 360 / 180, y: 0, z: 0, duration: duration)
+        let rotationAction = SCNAction.rotateBy(x: 0, y: CGFloat.pi * 360 / 180, z: 0, duration: duration)
         let forever = SCNAction.repeatForever(rotationAction)
         return forever
-    }
-    
-    
-    private func planeNode(withReferenceImage image: ARReferenceImage) -> SCNNode {
-        let plane = SCNPlane(width: image.physicalSize.width,
-                             height: image.physicalSize.height)
-        let node = SCNNode(geometry: plane)
-        return node
-    }
-
-    private func node(with imageName: String) -> SCNNode? {
-        for node in sceneView.scene.rootNode.childNodes {
-            if node.name == imageName {
-                return node
-            }
-        }
-        return nil
-    }
-    
-    private func resetTrackingConfiguration() {
-        self.checkLabel.text = "Not Found.."
-        let configuration = ARImageTrackingConfiguration()
-        guard let referenceImages = ARReferenceImage.referenceImages(inGroupNamed: "AR Resources", bundle: nil) else {
-            fatalError("Missing expected asset catalog resources.")
-        }
-    
-        configuration.maximumNumberOfTrackedImages = 1
-        configuration.trackingImages = referenceImages
-        let options: ARSession.RunOptions = [.resetTracking, .removeExistingAnchors]
-        // Run the view's session
-        sceneView.session.run(configuration, options: options)
     }
 
 }

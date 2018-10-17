@@ -62,12 +62,12 @@
 			children = (
 				98A9BF69217707A300C0E77E /* PlanetNode.swift */,
 				983AD1DA2175D1FC00CBE117 /* solarSystem.scn */,
-				983AD1C22175BF2F00CBE117 /* AppDelegate.swift */,
-				983AD1C42175BF2F00CBE117 /* art.scnassets */,
 				983AD1C62175BF2F00CBE117 /* ViewController.swift */,
 				983AD1C82175BF2F00CBE117 /* Main.storyboard */,
 				983AD1CB2175BF3200CBE117 /* Assets.xcassets */,
+				983AD1C42175BF2F00CBE117 /* art.scnassets */,
 				983AD1CD2175BF3200CBE117 /* LaunchScreen.storyboard */,
+				983AD1C22175BF2F00CBE117 /* AppDelegate.swift */,
 				983AD1D02175BF3200CBE117 /* Info.plist */,
 			);
 			path = ARSaturn;
