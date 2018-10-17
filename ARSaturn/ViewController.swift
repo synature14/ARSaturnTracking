@@ -73,29 +73,29 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             switch type {
             case .sun:
                 node.position = SCNVector3(0, 0, -5)
-                node.runAction(rotating(duration: 0.5))
+                node.runAction(rotating(duration: 5))
                 self.sceneView.scene.rootNode.addChildNode(node)
                 
             case .mercury:
                 node.position = SCNVector3(0, 1, -7)
-                let mercuryParent = parentNode(of: node, revolving: 0.38, childRotating: 3)
+                let mercuryParent = parentNode(of: node, revolving: 1.78, childRotating: 4)
                 self.sceneView.scene.rootNode.addChildNode(mercuryParent)
                 
             case .venus:
                 node.position = SCNVector3(0, 3, -8)
-                let venusParent = parentNode(of: node, revolving: 0.72, childRotating: 4)
+                let venusParent = parentNode(of: node, revolving: 1.72, childRotating: 6)
                 self.sceneView.scene.rootNode.addChildNode(venusParent)
                 
             case .earth:
                 createEarthAndMoon()
                 
             case .mars:
-                node.position = SCNVector3(0, 0, -10)
-                let marsParent = parentNode(of: node, revolving: 1.1, childRotating: 4)
+                node.position = SCNVector3(0, -3, -12)
+                let marsParent = parentNode(of: node, revolving: 2.6, childRotating: 4)
                 self.sceneView.scene.rootNode.addChildNode(marsParent)
            
             case .jupiter:
-                node.position = SCNVector3(1, 4.5, -14)
+                node.position = SCNVector3(1, 4.5, -15)
                 let jupiterParent = parentNode(of: node, revolving: 4.2, childRotating: 5)
                 self.sceneView.scene.rootNode.addChildNode(jupiterParent)
                 
@@ -125,15 +125,16 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         earth.runAction(rotating(duration: 4))     // 자전
         
         let moon = childNodes.filter { $0.name == PlanetType.moon.rawValue }.first!
-        moon.runAction(rotating(duration: 2))          // 자전
+        moon.position = SCNVector3(0, 0, -2)        // Relative position
+        moon.runAction(rotating(duration: 2))       // 자전
         
         let moonParent = PlanetNode()
-        moonParent.eulerAngles = SCNVector3(0, 0, 45.degreeToRadians)
+        moonParent.eulerAngles = SCNVector3(0, 0, 10.degreeToRadians)
         moonParent.addChildNode(moon)
         earth.addChildNode(moonParent)
         
         let earthParent = PlanetNode()
-        earthParent.position = SCNVector3(0, 0, -5)
+        earthParent.position = SCNVector3(0, 0, -10)
         earthParent.revolvingAnimation(speed: 1.0)  // 공전
         earthParent.addChildNode(earth)
         
@@ -145,7 +146,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         let childNodes = solarScene.rootNode.childNodes
         
         let saturn = childNodes.filter { $0.name == PlanetType.saturn.rawValue }.first!
-        let saturnRing = childNodes.filter { $0.name == "saturnRing" }.first!
+        let saturnRing = childNodes.filter { $0.name == PlanetType.saturnRing.rawValue }.first!
         saturn.runAction(rotating(duration: 6))
         saturnRing.position = SCNVector3(0, 0, 0)
         saturn.addChildNode(saturnRing)
