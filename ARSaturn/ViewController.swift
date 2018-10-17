@@ -13,12 +13,7 @@ import ARKit
 class ViewController: UIViewController, ARSCNViewDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
-    @IBOutlet weak var checkLabel: UILabel!
-    
-    let fadeDuration: TimeInterval = 0.3
-    let rotateDuration: TimeInterval = 5
-    let waitDuration: TimeInterval = 0.5
-    
+ 
     enum Planet: String {
         case sun = "Sun"
         case mercury = "mercury"
@@ -30,30 +25,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     }
     
     var planetType: Planet!
-    
-    lazy var fadeAndSpinAction: SCNAction = {
-        return .sequence([
-            .fadeIn(duration: fadeDuration),
-            .rotateBy(x: 0, y:  CGFloat.pi * 360 / 180, z: 0, duration: rotateDuration),
-            .wait(duration: waitDuration)
-//            .fadeOut(duration: fadeDuration)
-            ])
-    }()
-    
-    lazy var fadeAction: SCNAction = {
-        return .sequence([
-            .fadeOpacity(by: 0.8, duration: fadeDuration),
-            .wait(duration: waitDuration),
-            .fadeOut(duration: fadeDuration)
-            ])
-    }()
-    
-    lazy var spinAction: SCNAction = {
-        let spinAction = SCNAction.rotateBy(x: 0, y:  CGFloat.pi * 360 / 180, z: 0, duration: rotateDuration)
-        let repeatAction = SCNAction.repeatForever(spinAction)
-        return repeatAction
-    }()
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         // Show statistics such as fps and timing information
@@ -65,7 +37,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         // Set the scene to the view
         sceneView.scene = solarScene
-        sceneView.scene.rootNode.childNodes.map { $0.runAction(spinAction) }
+//        sceneView.scene.rootNode.childNodes.map { $0.runAction(spinAction) }
         configureLighting()
     }
     
@@ -73,7 +45,11 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         super.viewWillAppear(animated)
         let config = ARWorldTrackingConfiguration()
         sceneView.session.run(config, options: ARSession.RunOptions.resetTracking)
-//        resetTrackingConfiguration()    // Create a session configuration
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        createEarthAndMoon()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -87,44 +63,40 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.automaticallyUpdatesLighting = true
     }
     
-    
-    @IBAction func refreshButtonTapped(_ sender: Any) {
-        resetTrackingConfiguration()
+    private func parentNode(of planet: SCNNode) -> PlanetNode {
+        let parentNode = PlanetNode()
+        
+        return parentNode
+    }
+
+    func createEarthAndMoon() {
+        let earth = sceneView.scene.rootNode.childNodes.filter { $0.name == Planet.earth.rawValue }.first!
+        earth.runAction(rotating(duration: 6))     // 자전
+        
+        let moon = sceneView.scene.rootNode.childNodes.filter { $0.name == Planet.moon.rawValue }.first!
+        moon.runAction(rotating(duration: 5))          // 자전
+        
+        let moonParent = PlanetNode()
+        moonParent.eulerAngles = SCNVector3(0, 0, 0)
+        moonParent.addChildNode(moon)
+        earth.addChildNode(moonParent)
+        
+        let earthParent = PlanetNode()
+        earthParent.position = SCNVector3(0, 0, -10)
+        earthParent.revolvingAnimation(speed: 1.3)  // 공전
+        earthParent.addChildNode(earth)
+        
+        self.sceneView.scene.rootNode.addChildNode(earthParent)
     }
     
-   /*
-    // When detected image!
-    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
-        guard let imageAnchor = anchor as? ARImageAnchor else { return }
-        let referenceImage = imageAnchor.referenceImage
-        
-        
-        let imageName = referenceImage.name ?? "None"
-       
-        switch imageName {
-        case :
-        default: break
-        }
-        
-        guard let overlayNode = self.node(with: imageName) else {
-            return
-        }
-        let planeNode = self.planeNode(withReferenceImage: imageAnchor.referenceImage)
-        planeNode.opacity = 0.0
-        planeNode.eulerAngles.x = -.pi / 2
-        planeNode.runAction(self.fadeAction)
-        node.addChildNode(planeNode)
-        
-        overlayNode.opacity = 0
-        overlayNode.position.y = 0.2
-        overlayNode.runAction(self.fadeAndSpinAction)
-        
-        node.addChildNode(overlayNode)
-        DispatchQueue.main.async {
-             self.checkLabel.text = "Image detected: \"\(imageName)\""
-        }
+
+    // 자전
+    private func rotating(duration: Double) -> SCNAction {
+        let rotationAction = SCNAction.rotateBy(x: CGFloat.pi * 360 / 180, y: 0, z: 0, duration: duration)
+        let forever = SCNAction.repeatForever(rotationAction)
+        return forever
     }
-     */
+    
     
     private func planeNode(withReferenceImage image: ARReferenceImage) -> SCNNode {
         let plane = SCNPlane(width: image.physicalSize.width,
