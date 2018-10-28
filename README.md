@@ -4,4 +4,4 @@
  You can add Uranus or Neptune as way as you want!
 
 ## How it works?
-![demo](https://github.com/synature14/ARSolarSystem/master/gifs/demo.gif)
+![demo](https://github.com/synature14/ARSolarSystem/tree/master/gifs/demo.gif)
