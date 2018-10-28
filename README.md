@@ -5,4 +5,4 @@
 
 ## How it works?
 
-![demo_small](https://github.com/synature14/ARSolarSystem/demo_small.gif)
+![](https://github.com/synature14/ARSolarSystem/blob/master/demo_small.gif)
